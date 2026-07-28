@@ -41,11 +41,17 @@ export const WatchlistProvider = ({ children }) => {
       release_date: movie.release_date,
       original_language: movie.original_language,
       popularity: movie.popularity,
+      overview: movie.overview,
+      genre_ids: movie.genre_ids || movie.genres?.map((genre) => genre.id) || [],
     };
     setRecentlyViewed((current) => [
       snapshot,
       ...current.filter((item) => item.id !== movie.id),
     ].slice(0, 8));
+  }, []);
+
+  const removeRecentlyViewed = useCallback((movieId) => {
+    setRecentlyViewed((current) => current.filter((movie) => movie.id !== movieId));
   }, []);
 
   const value = useMemo(
@@ -55,8 +61,9 @@ export const WatchlistProvider = ({ children }) => {
       isSaved: (id) => watchlist.some((movie) => movie.id === id),
       toggleMovie,
       addRecentlyViewed,
+      removeRecentlyViewed,
     }),
-    [addRecentlyViewed, recentlyViewed, toggleMovie, watchlist],
+    [addRecentlyViewed, recentlyViewed, removeRecentlyViewed, toggleMovie, watchlist],
   );
 
   return <WatchlistContext.Provider value={value}>{children}</WatchlistContext.Provider>;

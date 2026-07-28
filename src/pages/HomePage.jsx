@@ -10,7 +10,7 @@ import { getTrendingMovies, updateSearchCount } from "../appwrite.js";
 import { useWatchlist } from "../context/WatchlistContext.jsx";
 
 const HomePage = () => {
-  const { recentlyViewed } = useWatchlist();
+  const { recentlyViewed, removeRecentlyViewed } = useWatchlist();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
@@ -29,11 +29,25 @@ const HomePage = () => {
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
   const activeRequest = useRef(null);
+  const previousSearchMode = useRef(false);
+  const normalizedSearchTerm = searchTerm.trim();
+  const isSearchMode = normalizedSearchTerm.length > 0;
+  const isSearchPending = normalizedSearchTerm !== debouncedSearchTerm;
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setDebouncedSearchTerm(searchTerm.trim()), 500);
     return () => window.clearTimeout(timeoutId);
   }, [searchTerm]);
+
+  useEffect(() => {
+    if (isSearchMode && !previousSearchMode.current) {
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+      });
+    }
+    previousSearchMode.current = isSearchMode;
+  }, [isSearchMode]);
 
   useEffect(() => {
     document.title = "MovieQues — Find your next movie";
@@ -121,14 +135,14 @@ const HomePage = () => {
   }, [movies, navigate, recentlyViewed]);
 
   const selectedGenre = genres.find((item) => String(item.id) === genre);
-  const resultsTitle = debouncedSearchTerm
-    ? `Results for “${debouncedSearchTerm}”`
+  const resultsTitle = normalizedSearchTerm
+    ? `Results for “${normalizedSearchTerm}”`
     : selectedGenre
       ? `${selectedGenre.name} Movies`
       : "Discover Movies";
 
   return (
-    <main>
+    <main className={isSearchMode ? "search-mode" : ""}>
       <div className="pattern" />
       <div className="wrapper">
         <SiteNav />
@@ -141,7 +155,7 @@ const HomePage = () => {
           <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </header>
 
-        {trendingMovies.length > 0 && (
+        {!isSearchMode && trendingMovies.length > 0 && (
           <section className="trending" aria-labelledby="trending-heading">
             <div className="section-heading">
               <div>
@@ -167,7 +181,7 @@ const HomePage = () => {
           </section>
         )}
 
-        {recentlyViewed.length > 0 && (
+        {!isSearchMode && recentlyViewed.length > 0 && (
           <section className="recently-viewed" aria-labelledby="recent-heading">
             <div className="section-heading">
               <div>
@@ -179,7 +193,7 @@ const HomePage = () => {
             <ul className="recent-grid">
               {recentlyViewed.map((movie) => (
                 <li key={movie.id}>
-                  <MovieCard movie={movie} />
+                  <MovieCard movie={movie} genres={genres} onRemove={removeRecentlyViewed} />
                 </li>
               ))}
             </ul>
@@ -191,7 +205,9 @@ const HomePage = () => {
             <div>
               <p className="eyebrow">Browse the collection</p>
               <h2 id="movies-heading">{resultsTitle}</h2>
-              {!isLoading && !error && <p className="result-count">{totalResults.toLocaleString()} movies found</p>}
+              {!isLoading && !isSearchPending && !error && (
+                <p className="result-count">{totalResults.toLocaleString()} movies found</p>
+              )}
             </div>
             <div className="controls-stack">
               <DiscoveryControls
@@ -206,15 +222,15 @@ const HomePage = () => {
               <button
                 className="surprise-button"
                 onClick={surpriseMe}
-                disabled={isLoading || movies.length === 0}
+                disabled={isLoading || isSearchPending || movies.length === 0}
               >
                 <span aria-hidden="true">🎲</span> Surprise Me
               </button>
             </div>
           </div>
 
-          {isLoading ? (
-            <Spinner />
+          {isLoading || isSearchPending ? (
+            <Spinner label={isSearchPending ? "Searching movies..." : "Loading movies..."} />
           ) : error && movies.length === 0 ? (
             <div className="state-card" role="alert">
               <h3>Something interrupted the show</h3>
@@ -230,7 +246,7 @@ const HomePage = () => {
           ) : (
             <>
               <ul className="movie-grid">
-                {movies.map((movie) => <li key={movie.id}><MovieCard movie={movie} /></li>)}
+                {movies.map((movie) => <li key={movie.id}><MovieCard movie={movie} genres={genres} /></li>)}
               </ul>
               {error && <p className="inline-error" role="alert">{error}</p>}
               {page < totalPages && (
