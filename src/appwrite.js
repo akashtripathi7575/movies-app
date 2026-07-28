@@ -3,9 +3,10 @@ import { Client, Databases, Query, ID } from 'appwrite';
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const COLLECTION_ID = import.meta.env.VITE_APPWRITE_COLLECTION_ID;
 const PROJECT_ID = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+const APPWRITE_ENDPOINT = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
 
 const client = new Client()
-.setEndpoint('https://cloud.appwrite.io/v1')
+.setEndpoint(APPWRITE_ENDPOINT)
 .setProject(PROJECT_ID);
 
 const database = new Databases(client);
@@ -13,7 +14,9 @@ const database = new Databases(client);
 
 export const updateSearchCount = async (searchTerm, movie) => {
     try {
-        const result = await database.listDocuments(DATABASE_ID, COLLECTION_ID, [Query.equal('searchTerm', searchTerm)]);
+        const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+        if (!normalizedSearchTerm) return;
+        const result = await database.listDocuments(DATABASE_ID, COLLECTION_ID, [Query.equal('searchTerm', normalizedSearchTerm)]);
 
         if(result.documents.length > 0) {
             const doc = result.documents[0];
@@ -23,10 +26,12 @@ export const updateSearchCount = async (searchTerm, movie) => {
             })
         } else {
             await database.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
-                searchTerm,
+                searchTerm: normalizedSearchTerm,
                 count: 1,
                 movie_id: movie.id,
-                poster_url:  `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                poster_url: movie.poster_path
+                    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                    : '/no-movie.jpg'
             });
         }
     }  catch (error) {
@@ -41,5 +46,6 @@ export const getTrendingMovies = async () => {
         return result.documents;
     } catch (error) {
         console.error(error);
+        return [];
     }
 }

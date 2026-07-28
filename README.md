@@ -1,16 +1,56 @@
-# React + Vite
+# MovieQues
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MovieQues is a responsive React movie-discovery app powered by TMDB, with search trends stored in Appwrite. Visitors can search and filter movies, explore detailed cast and recommendation data, and keep a personal watchlist in their browser.
 
-Currently, two official plugins are available:
+## Highlights
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Debounced, cancellable movie search with shareable URL parameters
+- Popular, rating, release-year and newest-first discovery controls
+- Pagination with a load-more flow
+- Detailed movie pages with cast, ratings, genres and similar titles
+- Official trailer playback in an accessible, responsive modal
+- Persistent local watchlist with no account required
+- Recently viewed history stored locally in the browser
+- Appwrite-backed trending searches
+- Accessible links, controls, focus states and reduced-motion support
+- Responsive images, lazy loading and route-level code splitting
+- Friendly loading, empty, error and 404 states
+- Netlify-compatible SPA deep links
 
-## React Compiler
+## Tech stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 and React Router
+- Vite and Tailwind CSS
+- TMDB API
+- Appwrite
+- Framer Motion
 
-## Expanding the ESLint configuration
+## Local setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Install dependencies with `npm install`.
+2. Create `.env.local` with the following values:
+
+```env
+VITE_TMDB_API_KEY=
+VITE_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+VITE_APPWRITE_PROJECT_ID=
+VITE_APPWRITE_DATABASE_ID=
+VITE_APPWRITE_COLLECTION_ID=
+```
+
+3. Run `npm run dev`.
+
+## Quality checks
+
+```bash
+npm run lint
+npm run build
+```
+
+## Deployment
+
+The project includes `public/_redirects` so React Router detail and watchlist URLs work when opened directly on Netlify.
+
+## Data attribution
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
